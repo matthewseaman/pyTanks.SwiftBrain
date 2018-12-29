@@ -25,9 +25,9 @@ let package = Package(
             dependencies: ["Navigation", "PyPlayer"]),
         .target(
             name: "Navigation",
-            dependencies: ["Math"]),
+            dependencies: ["Compute"]),
         .target(
-            name: "Math",
+            name: "Compute",
             dependencies: []),
     ]
 )
