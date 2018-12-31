@@ -28,12 +28,12 @@ let package = Package(
             dependencies: ["Brain", "PlayerSupport"]),
         .target(
             name: "Brain",
-            dependencies: ["Navigation", "Artillery", "PlayerSupport"]),
+            dependencies: ["Navigate", "Artillery", "PlayerSupport"]),
         .target(
             name: "Artillery",
-            dependencies: ["Navigation", "PlayerSupport"]),
+            dependencies: ["Navigate", "PlayerSupport"]),
         .target(
-            name: "Navigation",
+            name: "Navigate",
             dependencies: ["Compute"]),
         .target(
             name: "Compute",
