@@ -1,4 +1,4 @@
 #!/bin/bash
 # Build Swift Package Executable
 swift build -c $1 -Xswiftc "-target" -Xswiftc "x86_64-apple-macosx10.12"
-cp ./.build/x86_64-apple-macosx10.10/$1/pyTanks start
+cp ./.build/x86_64-apple-macosx10.10/$1/runSample start
