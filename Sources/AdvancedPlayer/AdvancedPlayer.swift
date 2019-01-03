@@ -6,12 +6,15 @@
 //
 
 import PlayerSupport
+import Brain
 
-public struct AdvancedPlayer: Player {
+public class AdvancedPlayer: Player {
     
     public var log: Log!
     
     public var gameConfig: GameConfiguration!
+    
+    public var brain: Brain!
     
     public var playerDescription: String? {
         return "Swift client using the example AdvancedPlayer from pyTanks.SwiftBrain."
@@ -22,19 +25,22 @@ public struct AdvancedPlayer: Player {
     public func connectedToServer() {
         log.print("connectedToServer", for: .debug)
         
-        // Nothing special to do here
+        self.brain = Brain(boardWidth: gameConfig.map.width, height: gameConfig.map.height, mode: .momentary, priority: .mostOptimalPath)
+        brain.log = log
     }
     
     public func roundStarting(withGameState gameState: GameState) {
         log.print("roundStarting", for: .debug)
         
-        // Nothing much to do here either
+        brain.remember(gameState)
+        brain.navigationTarget = .point(x: 499, y: 0)
     }
     
-    public mutating func makeMove(withGameState gameState: GameState) -> [Command] {
+    public func makeMove(withGameState gameState: GameState) -> [Command] {
         log.print("makeMove", for: .debug)
         
-        return []
+        brain.remember(gameState)
+        return brain.optimalMove()
     }
     
     public func tankKilled() {
@@ -46,7 +52,7 @@ public struct AdvancedPlayer: Player {
     public func roundOver() {
         log.print("roundOver", for: .debug)
         
-        // Nothing to do here
+        brain.forgetRoundInfo()
     }
     
 }
