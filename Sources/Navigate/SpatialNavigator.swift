@@ -145,8 +145,10 @@ public final class SpatialNavigator: Navigator {
             currentPath.removeFirst()
             self.path = currentPath
             return nextAction(from: currentLocation)
-        } else  {
-            return .go(heading: currentLocation.vector(pointingTo: nextPoint).radiansCounterclockwiseFromPositiveXAxis)
+        } else {
+            let heading = currentLocation.vector(pointingTo: nextPoint).radiansCounterclockwiseFromPositiveXAxis
+            log?.print("\(currentLocation) -> \(nextPoint) turn \(heading)", for: .debug)
+            return .go(heading: heading)
         }
     }
     
