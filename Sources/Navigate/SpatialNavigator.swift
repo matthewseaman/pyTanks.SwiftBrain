@@ -81,6 +81,7 @@ public final class SpatialNavigator: Navigator {
             
             let endTime = Date()
             self.log?.print("Finished spatial navigation calculation from \(source) to \(destination) in \(endTime.timeIntervalSince(startTime)) seconds.", for: .gameEvents)
+            self.log?.print("Path=\(path)", for: .debug)
         }
     }
     
