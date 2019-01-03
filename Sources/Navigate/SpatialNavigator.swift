@@ -127,7 +127,7 @@ public final class SpatialNavigator: Navigator {
     }
     
     private func reconstructedPath(from node: Node) -> [CGPoint] {
-        return sequence(first: node, next: { $0.parent }).map { $0.rect.center }
+        return sequence(first: node, next: { $0.parent }).reversed().map { $0.rect.center }
     }
     
     public func waitForRecalculation() {
