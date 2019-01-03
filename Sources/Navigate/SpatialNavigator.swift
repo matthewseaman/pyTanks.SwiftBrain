@@ -209,7 +209,7 @@ public final class SpatialNavigator: Navigator {
             
             let maxX = Int(boardRect.width / tileSize.width) - 1
             let maxY = Int(boardRect.height / tileSize.height) - 1
-            positions = positions.filter { $0.0 >= 0 && $0.0 < maxX && $0.1 >= 0 && $0.1 < maxY }
+            positions = positions.filter { $0.0 >= 0 && $0.0 <= maxX && $0.1 >= 0 && $0.1 <= maxY }
             
             return positions.map { Node(xIndex: $0.0, yIndex: $0.1, boardRect: boardRect, tileSize: rect.size, parent: self) }
         }
