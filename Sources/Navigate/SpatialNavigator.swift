@@ -193,7 +193,7 @@ public final class SpatialNavigator: Navigator {
         }
         
         func neighbors() -> [Node] {
-            let positions = [
+            var positions = [
                 (xIndex, yIndex - 1), // Up
                 (xIndex, yIndex + 1), // Down
                 (xIndex - 1, yIndex), // Left
@@ -202,7 +202,7 @@ public final class SpatialNavigator: Navigator {
             
             let maxX = Int(boardRect.width / tileSize.width) - 1
             let maxY = Int(boardRect.height / tileSize.height) - 1
-            guard !positions.contains(where: { $0.0 < 0 || $0.0 > maxX || $0.1 < 0 || $0.1 > maxY }) else { return [] }
+            positions = positions.filter { $0.0 >= 0 && $0.0 < maxX && $0.1 >= 0 && $0.1 < maxY }
             
             return positions.map { Node(xIndex: $0.0, yIndex: $0.1, boardRect: boardRect, tileSize: rect.size, parent: self) }
         }
