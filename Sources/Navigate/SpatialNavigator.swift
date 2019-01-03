@@ -140,7 +140,7 @@ public final class SpatialNavigator: Navigator {
             return nil
         }
         
-        if currentLocation.distance(to: nextPoint) < 1 {
+        if currentLocation.distance(to: nextPoint) < tileSize.width / 4 {
             currentPath.removeFirst()
             self.path = currentPath
             return nextAction(from: currentLocation)
