@@ -165,8 +165,8 @@ public final class SpatialNavigator: Navigator {
         var estimatedDistanceFromDestination: Int
         
         convenience init(point: CGPoint, boardRect: CGRect, tileSize: CGSize) {
-            let xIndex = Int(((point.x + 1) / tileSize.width).rounded(.up))
-            let yIndex = Int(((point.y + 1) / tileSize.height).rounded(.up))
+            let xIndex = Int(((point.x) / tileSize.width).rounded(.down))
+            let yIndex = Int(((point.y) / tileSize.height).rounded(.down))
             self.init(xIndex: xIndex, yIndex: yIndex, boardRect: boardRect, tileSize: tileSize, parent: nil)
         }
         
