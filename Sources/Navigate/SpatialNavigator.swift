@@ -33,7 +33,7 @@ public final class SpatialNavigator: Navigator {
     
     private var _obstacles = [Obstacle]()
     
-    private var path: [CGPoint] {
+    private(set) var path: [CGPoint] {
         get {
             return syncQueue.sync { _path }
         }
@@ -46,7 +46,7 @@ public final class SpatialNavigator: Navigator {
     
     private var _path = [CGPoint]()
     
-    private var openList = Set<Node>()
+    private var openList = [CGPoint: Node]()
     
     private var closedList = Set<Node>()
     
@@ -89,35 +89,38 @@ public final class SpatialNavigator: Navigator {
         let end = Node(point: destination, boardRect: boardRect, tileSize: tileSize)
         
         closedList = []
-        openList = [start]
+        openList = [start.tilePoint: start]
         
         start.shortestFoundDistanceFromSource = 0
         start.estimatedDistanceFromDestination = start.estimatedDistance(to: end)
         
         while !openList.isEmpty {
-            let node = openList.min(by: { $0.estimatedScore < $1.estimatedScore })!
+            let node = openList.values.min(by: { $0.estimatedScore < $1.estimatedScore })!
+            closedList.insert(node)
+            openList[node.tilePoint] = nil
             
             if node == end {
                 return reconstructedPath(from: node)
             }
             
+            let newShortestDistanceFromSource = node.shortestFoundDistanceFromSource + 1
+            
             for neighbor in node.neighbors() {
-                let newShortestDistanceFromSource = node.shortestFoundDistanceFromSource + 1
-                let betterDistanceFromSource = newShortestDistanceFromSource < neighbor.shortestFoundDistanceFromSource
-                if openList.contains(neighbor) && betterDistanceFromSource {
-                    openList.remove(neighbor)
+                if closedList.contains(neighbor) {
+                    continue
                 }
-                if closedList.contains(neighbor) && betterDistanceFromSource {
-                    closedList.remove(neighbor)
-                }
-                if !openList.contains(neighbor) && !closedList.contains(neighbor) {
+                
+                if let existing = openList[neighbor.tilePoint] {
+                    if newShortestDistanceFromSource < existing.shortestFoundDistanceFromSource {
+                        existing.shortestFoundDistanceFromSource = newShortestDistanceFromSource
+                        existing.parent = neighbor.parent
+                    }
+                } else {
                     neighbor.shortestFoundDistanceFromSource = newShortestDistanceFromSource
                     neighbor.estimatedDistanceFromDestination = neighbor.estimatedDistance(to: end)
-                    openList.insert(neighbor)
+                    openList[neighbor.tilePoint] = neighbor
                 }
             }
-            
-            closedList.insert(node)
         }
         
         return []
@@ -151,6 +154,10 @@ public final class SpatialNavigator: Navigator {
         let xIndex: Int
         
         let yIndex: Int
+        
+        var tilePoint: CGPoint {
+            return CGPoint(x: xIndex, y: yIndex)
+        }
         
         let rect: CGRect
         
