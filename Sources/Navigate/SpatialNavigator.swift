@@ -196,7 +196,7 @@ public final class SpatialNavigator: Navigator {
         }
         
         func estimatedDistance(to destination: Node) -> Int {
-            return abs(destination.xIndex + xIndex) + abs(destination.yIndex + yIndex)
+            return abs(destination.xIndex - xIndex) + abs(destination.yIndex - yIndex)
         }
         
         func neighbors() -> [Node] {
