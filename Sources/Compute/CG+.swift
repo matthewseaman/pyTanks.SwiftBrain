@@ -30,11 +30,9 @@ extension CGRect {
 extension CGVector {
     
     public var radiansCounterclockwiseFromPositiveXAxis: CGFloat {
-        let angle = atan2(dy, dx)
-        if angle < 0 {
-            return 2 * .pi + angle
-        }
-        return angle
+        // The game board has origin in top left, but headings are expressed counterclockwise.
+        // Need to flip y axis.
+        return atan2(-dy, dx)
     }
     
 }
