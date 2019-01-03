@@ -222,3 +222,11 @@ extension SpatialNavigator.Node: Hashable {
     }
     
 }
+
+extension SpatialNavigator.Node: CustomStringConvertible {
+    
+    var description: String {
+        return "(\(xIndex), \(yIndex))"
+    }
+    
+}
