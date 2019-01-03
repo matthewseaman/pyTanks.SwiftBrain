@@ -25,7 +25,7 @@ public class AdvancedPlayer: Player {
     public func connectedToServer() {
         log.print("connectedToServer", for: .debug)
         
-        self.brain = Brain(boardWidth: gameConfig.map.width, height: gameConfig.map.height, mode: .momentary, priority: .mostOptimalPath)
+        self.brain = Brain(config: gameConfig, mode: .momentary, priority: .mostOptimalPath)
         brain.log = log
     }
     

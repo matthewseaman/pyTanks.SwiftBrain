@@ -41,9 +41,9 @@ open class Brain {
         }
     }
     
-    public init(boardWidth width: Double, height: Double, mode: NavigationMode, priority: NavigationPriority) {
-        self.boardRect = CGRect(x: 0, y: 0, width: width, height: height)
-        self.navigator = Brain.makeNavigator(boardRect: boardRect, mode: mode, priority: priority)
+    public init(config: GameConfiguration, mode: NavigationMode, priority: NavigationPriority) {
+        self.boardRect = CGRect(x: 0, y: 0, width: config.map.width, height: config.map.height)
+        self.navigator = Brain.makeNavigator(boardRect: boardRect, config: config, mode: mode, priority: priority)
     }
     
     public func remember(_ state: GameState) {
@@ -101,12 +101,14 @@ open class Brain {
         navigator.recalculate(from: state.myTank.center, to: target)
     }
     
-    private static func makeNavigator(boardRect: CGRect, mode: NavigationMode, priority: NavigationPriority) -> Navigator {
+    private static func makeNavigator(boardRect: CGRect, config: GameConfiguration, mode: NavigationMode, priority: NavigationPriority) -> Navigator {
         switch mode {
         case .momentary:
             switch priority {
             case .mostOptimalPath:
-                return SpatialNavigator(boardRect: boardRect)
+                let nav = SpatialNavigator(boardRect: boardRect)
+                nav.tileSize = CGSize(width: config.tank.width, height: config.tank.height)
+                return nav
             }
         }
     }

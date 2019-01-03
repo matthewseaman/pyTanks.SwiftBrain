@@ -18,7 +18,7 @@ public final class SpatialNavigator: Navigator {
     
     private let boardRect: CGRect
     
-    var tileSize: CGSize
+    public var tileSize: CGSize
     
     private var obstacles: [Obstacle] {
         get {
