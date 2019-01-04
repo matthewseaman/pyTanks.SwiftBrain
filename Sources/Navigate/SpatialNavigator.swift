@@ -5,11 +5,14 @@
 //  Created by Matthew Seaman on 12/31/18.
 //
 
+import os
 import Dispatch
 import Foundation
 import CoreGraphics
 import Compute
 import PlayerSupport
+
+private let signpostId = OSSignpostID(log: SignpostLog.navigationLog)
 
 /// A `Navigator` that finds the shortest path in a 2D map at one moment in time.
 public final class SpatialNavigator: Navigator {
@@ -75,6 +78,7 @@ public final class SpatialNavigator: Navigator {
         backgroundQueue.async {
             let startTime = Date()
             self.log?.print("Starting spatial navigation calculation from \(source) to \(destination) on CPU.", for: .gameEvents)
+            os_signpost(.begin, log: SignpostLog.navigationLog, name: "Spatial Pathfinding")
             
             let path = self.path(from: source, to: destination)
             self.path = path
@@ -82,6 +86,7 @@ public final class SpatialNavigator: Navigator {
             let endTime = Date()
             self.log?.print("Finished spatial navigation calculation from \(source) to \(destination) in \(endTime.timeIntervalSince(startTime)) seconds.", for: .gameEvents)
             self.log?.print("Path=\(path)", for: .debug)
+            os_signpost(.end, log: SignpostLog.navigationLog, name: "Spatial Pathfinding")
         }
     }
     
