@@ -23,6 +23,9 @@ public final class SpatialNavigator: Navigator {
     
     public var tileSize: CGSize
     
+    private let maxXTileIndex: Int
+    private let maxYTileIndex: Int
+    
     private var obstacles: [Obstacle] {
         get {
             return syncQueue.sync { _obstacles }
@@ -62,6 +65,9 @@ public final class SpatialNavigator: Navigator {
     public init(boardRect: CGRect) {
         self.boardRect = boardRect
         self.tileSize = CGSize(width: 1, height: 1)
+        
+        self.maxXTileIndex = Int(boardRect.width / tileSize.width) - 1
+        self.maxYTileIndex = Int(boardRect.height / tileSize.height) - 1
     }
     
     public var hasObstacles: Bool {
@@ -216,9 +222,7 @@ public final class SpatialNavigator: Navigator {
             ]
             
             // Don't go outside bounds
-            let maxX = Int(navigator.boardRect.width / navigator.tileSize.width) - 1
-            let maxY = Int(navigator.boardRect.height / navigator.tileSize.height) - 1
-            positions = positions.filter { $0.0 >= 0 && $0.0 <= maxX && $0.1 >= 0 && $0.1 <= maxY }
+            positions = positions.filter { $0.0 >= 0 && $0.0 <= navigator.maxXTileIndex && $0.1 >= 0 && $0.1 <= navigator.maxYTileIndex }
             
             let nodes = positions.map { Node(xIndex: $0.0, yIndex: $0.1, parent: self, navigator: navigator) }
             
