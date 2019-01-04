@@ -86,8 +86,8 @@ public final class SpatialNavigator: Navigator {
     }
     
     func path(from source: CGPoint, to destination: CGPoint) -> [CGPoint] {
-        let start = Node(point: source, boardRect: boardRect, tileSize: tileSize)
-        let end = Node(point: destination, boardRect: boardRect, tileSize: tileSize)
+        let start = Node(point: source, navigator: self)
+        let end = Node(point: destination, navigator: self)
         
         closedList = []
         openList = [start.tilePoint: start]
@@ -164,9 +164,7 @@ public final class SpatialNavigator: Navigator {
         
         let rect: CGRect
         
-        let boardRect: CGRect
-        
-        let tileSize: CGSize
+        private unowned let navigator: SpatialNavigator
         
         var parent: Node?
         
@@ -174,21 +172,20 @@ public final class SpatialNavigator: Navigator {
         
         var estimatedDistanceFromDestination: Int
         
-        convenience init(point: CGPoint, boardRect: CGRect, tileSize: CGSize) {
-            let xIndex = Int(((point.x) / tileSize.width).rounded(.down))
-            let yIndex = Int(((point.y) / tileSize.height).rounded(.down))
-            self.init(xIndex: xIndex, yIndex: yIndex, boardRect: boardRect, tileSize: tileSize, parent: nil)
+        convenience init(point: CGPoint, navigator: SpatialNavigator) {
+            let xIndex = Int(((point.x) / navigator.tileSize.width).rounded(.down))
+            let yIndex = Int(((point.y) / navigator.tileSize.height).rounded(.down))
+            self.init(xIndex: xIndex, yIndex: yIndex, parent: nil, navigator: navigator)
         }
         
-        init(xIndex: Int, yIndex: Int, boardRect: CGRect, tileSize: CGSize, parent: Node?) {
+        init(xIndex: Int, yIndex: Int, parent: Node?, navigator: SpatialNavigator) {
             self.parent = parent
             self.xIndex = xIndex
             self.yIndex = yIndex
             
-            let origin = CGPoint(x: tileSize.width * CGFloat(xIndex), y: tileSize.height * CGFloat(yIndex))
-            self.rect = CGRect(origin: origin, size: tileSize)
-            self.boardRect = boardRect
-            self.tileSize = tileSize
+            let origin = CGPoint(x: navigator.tileSize.width * CGFloat(xIndex), y: navigator.tileSize.height * CGFloat(yIndex))
+            self.rect = CGRect(origin: origin, size: navigator.tileSize)
+            self.navigator = navigator
             
             self.shortestFoundDistanceFromSource = .max
             self.estimatedDistanceFromDestination = .max
@@ -210,11 +207,15 @@ public final class SpatialNavigator: Navigator {
                 (xIndex + 1, yIndex) // Right
             ]
             
-            let maxX = Int(boardRect.width / tileSize.width) - 1
-            let maxY = Int(boardRect.height / tileSize.height) - 1
+            // Don't go outside bounds
+            let maxX = Int(navigator.boardRect.width / navigator.tileSize.width) - 1
+            let maxY = Int(navigator.boardRect.height / navigator.tileSize.height) - 1
             positions = positions.filter { $0.0 >= 0 && $0.0 <= maxX && $0.1 >= 0 && $0.1 <= maxY }
             
-            return positions.map { Node(xIndex: $0.0, yIndex: $0.1, boardRect: boardRect, tileSize: rect.size, parent: self) }
+            let nodes = positions.map { Node(xIndex: $0.0, yIndex: $0.1, parent: self, navigator: navigator) }
+            
+            // Go around walls
+            return nodes.filter { node in !navigator.obstacles.contains(where: { obst in obst.intersects(node.rect) }) }
         }
     }
     
