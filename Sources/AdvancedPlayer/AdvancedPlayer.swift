@@ -36,7 +36,7 @@ public class AdvancedPlayer: Player {
         brain.navigationTarget = .point(x: 499, y: 0)
     }
     
-    public func makeMove(withGameState gameState: GameState) -> [Command] {
+    public func makeMove(withGameState gameState: GameState) -> Command? {
         log.print("makeMove", for: .debug)
         
         brain.remember(gameState)

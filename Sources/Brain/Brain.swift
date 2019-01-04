@@ -29,6 +29,8 @@ open class Brain {
     
     private var mostRecentGameState: GameState?
     
+    private var sendGoOnNextMove = false
+    
     public var log: Log? {
         didSet {
             navigator.log = log
@@ -62,22 +64,30 @@ open class Brain {
         mostRecentGameState = nil
     }
     
-    public func optimalMove() -> [Command] {
+    public func optimalMove() -> Command? {
+        if sendGoOnNextMove {
+            sendGoOnNextMove = false
+            return Command.go
+        }
+        
         guard let state = mostRecentGameState else {
             log?.print("Cannot determine moves without game state. Ensure state is passed to Brain.remember(_:).", for: .debug)
-            return []
+            return nil
         }
         
         guard navigationTarget != nil, let action = navigator.nextAction(from: state.myTank.center) else {
             log?.print("No recommended action from navigator.", for: .debug)
-            return [.go]
+            return .go
         }
         
         switch action {
         case .go(let heading):
-            return [.turn(heading: Double(heading)), .go]
+            if !state.myTank.isMoving {
+                sendGoOnNextMove = true
+            }
+            return .turn(heading: Double(heading))
         case .stop:
-            return [.stop]
+            return .stop
         }
     }
     
