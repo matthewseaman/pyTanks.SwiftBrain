@@ -49,6 +49,8 @@ public final class SpatialNavigator: Navigator {
     
     private var _path = [CGPoint]()
     
+    private var obstaclesForCurrentRecalculation = [Obstacle]()
+    
     private var openList = [CGPoint: Node]()
     
     private var closedList = Set<Node>()
@@ -89,7 +91,9 @@ public final class SpatialNavigator: Navigator {
         }
     }
     
-    func path(from source: CGPoint, to destination: CGPoint) -> [CGPoint] {
+    private func path(from source: CGPoint, to destination: CGPoint) -> [CGPoint] {
+        self.obstaclesForCurrentRecalculation = self.obstacles
+        
         let start = Node(point: source, navigator: self)
         let end = Node(point: destination, navigator: self)
         
@@ -219,7 +223,7 @@ public final class SpatialNavigator: Navigator {
             let nodes = positions.map { Node(xIndex: $0.0, yIndex: $0.1, parent: self, navigator: navigator) }
             
             // Go around walls
-            return nodes.filter { node in !navigator.obstacles.contains(where: { obst in obst.intersects(node.rect) }) }
+            return nodes.filter { node in !navigator.obstaclesForCurrentRecalculation.contains(where: { obst in obst.intersects(node.rect) }) }
         }
     }
     
