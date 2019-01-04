@@ -5,6 +5,7 @@
 //  Created by Matthew Seaman on 1/1/19.
 //
 
+import Foundation
 import CoreGraphics
 import PlayerSupport
 import Navigate
@@ -21,6 +22,7 @@ open class Brain {
     
     public enum NavigationTarget {
         case point(x: Double, y: Double)
+        case tank(id: Int)
     }
     
     private let boardRect: CGRect
@@ -31,6 +33,8 @@ open class Brain {
     
     private var sendGoOnNextMove = false
     
+    private var navigationRecalculationTimer: Timer?
+    
     public var log: Log? {
         didSet {
             navigator.log = log
@@ -39,6 +43,7 @@ open class Brain {
     
     public var navigationTarget: NavigationTarget? {
         didSet {
+            navigationRecalculationTimer?.invalidate()
             recalculateNavigation()
         }
     }
@@ -106,6 +111,10 @@ open class Brain {
         switch navTarget {
         case .point(let x, let y):
             target = CGPoint(x: x, y: y)
+        case .tank(let id):
+            guard let tank = state.otherTanks[id] else { return }
+            target = CGPoint(x: tank.centerX, y: tank.centerY)
+            navigationRecalculationTimer = Timer.scheduledTimer(withTimeInterval: 0.15, repeats: true, block: { _ in self.recalculateNavigation() })
         }
         
         navigator.recalculate(from: state.myTank.center, to: target)
