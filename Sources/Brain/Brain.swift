@@ -33,7 +33,9 @@ open class Brain {
     
     private var sendGoOnNextMove = false
     
-    private var navigationRecalculationTimer: Timer?
+    private var navigationRecalculationInterval: TimeInterval?
+    
+    private var lastNavigationRecalculation: Date?
     
     public var log: Log? {
         didSet {
@@ -43,7 +45,7 @@ open class Brain {
     
     public var navigationTarget: NavigationTarget? {
         didSet {
-            navigationRecalculationTimer?.invalidate()
+            navigationRecalculationInterval = nil
             recalculateNavigation()
         }
     }
@@ -55,6 +57,10 @@ open class Brain {
     
     public func remember(_ state: GameState) {
         self.mostRecentGameState = state
+        
+        if let navRecalcInterval = navigationRecalculationInterval, lastNavigationRecalculation == nil || -lastNavigationRecalculation!.timeIntervalSinceNow >= navRecalcInterval {
+            recalculateNavigation()
+        }
         
         guard !navigator.hasObstacles else { return }
         
@@ -114,9 +120,10 @@ open class Brain {
         case .tank(let id):
             guard let tank = state.otherTanks[id] else { return }
             target = CGPoint(x: tank.centerX, y: tank.centerY)
-            navigationRecalculationTimer = Timer.scheduledTimer(withTimeInterval: 0.15, repeats: true, block: { _ in self.recalculateNavigation() })
+            navigationRecalculationInterval = 1
         }
         
+        lastNavigationRecalculation = Date()
         navigator.recalculate(from: state.myTank.center, to: target)
     }
     
