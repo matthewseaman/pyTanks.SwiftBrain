@@ -35,6 +35,9 @@ let package = Package(
         .target(
             name: "Navigate",
             dependencies: ["Compute", "PlayerSupport"]),
+        .testTarget(
+            name: "NavigationTests",
+            dependencies: ["Navigate"]),
         .target(
             name: "Compute",
             dependencies: []),
