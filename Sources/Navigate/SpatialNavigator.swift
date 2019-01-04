@@ -214,20 +214,24 @@ public final class SpatialNavigator: Navigator {
         }
         
         func neighbors() -> [Node] {
-            var positions = [
+            let positions = [
                 (xIndex, yIndex - 1), // Up
                 (xIndex, yIndex + 1), // Down
                 (xIndex - 1, yIndex), // Left
                 (xIndex + 1, yIndex) // Right
             ]
             
-            // Don't go outside bounds
-            positions = positions.filter { $0.0 >= 0 && $0.0 <= navigator.maxXTileIndex && $0.1 >= 0 && $0.1 <= navigator.maxYTileIndex }
+            var nodes = [Node]()
+            nodes.reserveCapacity(positions.count)
             
-            let nodes = positions.map { Node(xIndex: $0.0, yIndex: $0.1, parent: self, navigator: navigator) }
+            for (x, y) in positions {
+                guard x >= 0 && x <= navigator.maxXTileIndex && y >= 0 && y <= navigator.maxYTileIndex else { continue }
+                let node = Node(xIndex: x, yIndex: y, parent: self, navigator: navigator)
+                guard !navigator.obstaclesForCurrentRecalculation.contains(where: { $0.intersects(node.rect) }) else { continue }
+                nodes.append(node)
+            }
             
-            // Go around walls
-            return nodes.filter { node in !navigator.obstaclesForCurrentRecalculation.contains(where: { obst in obst.intersects(node.rect) }) }
+            return nodes
         }
     }
     
