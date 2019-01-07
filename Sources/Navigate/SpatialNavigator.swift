@@ -31,12 +31,16 @@ public final class SpatialNavigator: Navigator {
     ///
     /// Smaller sizes take longer to compute but result in more concise paths. Setting a tile size smaller than the entity that is navigating may result
     /// in gettting stuck on walls.
-    public var tileSize: CGSize
+    public var tileSize: CGSize {
+        didSet {
+            resetMaxTileIndices()
+        }
+    }
     
     /// The maximum 0-based x tile index.
-    private let maxXTileIndex: Int
+    private var maxXTileIndex: Int
     /// The maximum 0-based y tile index.
-    private let maxYTileIndex: Int
+    private var maxYTileIndex: Int
     
     /// The stored obstacles, which are always treated as static.
     private var obstacles: [Obstacle] {
@@ -97,8 +101,9 @@ public final class SpatialNavigator: Navigator {
         self.boardRect = boardRect
         self.tileSize = CGSize(width: 1, height: 1)
         
-        self.maxXTileIndex = Int(boardRect.width / tileSize.width) - 1
-        self.maxYTileIndex = Int(boardRect.height / tileSize.height) - 1
+        self.maxXTileIndex = 0
+        self.maxYTileIndex = 0
+        resetMaxTileIndices()
     }
     
     public var hasObstacles: Bool {
@@ -205,6 +210,12 @@ public final class SpatialNavigator: Navigator {
             log?.print("\(currentLocation) -> \(nextPoint) turn \(heading)", for: .debug)
             return .go(heading: heading)
         }
+    }
+    
+    /// Resets `maxXTileIndex` and `maxYTileIndex` based on `tileSize`.
+    private func resetMaxTileIndices() {
+        self.maxXTileIndex = Int(boardRect.width / tileSize.width) - 1
+        self.maxYTileIndex = Int(boardRect.height / tileSize.height) - 1
     }
     
     /// A `Node` represents one tile on the board.
