@@ -39,7 +39,7 @@ public final class SpatialNavigator: Navigator {
     
     private var _obstacles = [Obstacle]()
     
-    private(set) var path: [CGPoint] {
+    private(set) var path: AnyCollection<CGPoint> {
         get {
             return syncQueue.sync { _path }
         }
@@ -50,7 +50,7 @@ public final class SpatialNavigator: Navigator {
         }
     }
     
-    private var _path = [CGPoint]()
+    private var _path = AnyCollection<CGPoint>([])
     
     private var obstaclesForCurrentRecalculation = [Obstacle]()
     
@@ -97,7 +97,7 @@ public final class SpatialNavigator: Navigator {
         }
     }
     
-    private func path(from source: CGPoint, to destination: CGPoint) -> [CGPoint] {
+    private func path(from source: CGPoint, to destination: CGPoint) -> AnyCollection<CGPoint> {
         self.obstaclesForCurrentRecalculation = self.obstacles
         
         let start = Node(point: source, navigator: self)
@@ -138,11 +138,11 @@ public final class SpatialNavigator: Navigator {
             }
         }
         
-        return []
+        return AnyCollection([])
     }
     
-    private func reconstructedPath(from node: Node) -> [CGPoint] {
-        return sequence(first: node, next: { $0.parent }).reversed().map { $0.rect.center }
+    private func reconstructedPath(from node: Node) -> AnyCollection<CGPoint> {
+        return AnyCollection(Array(sequence(first: node, next: { $0.parent })).lazy.reversed().map({ $0.rect.center }))
     }
     
     public func waitForRecalculation() {
