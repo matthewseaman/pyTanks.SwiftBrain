@@ -12,20 +12,33 @@ import CoreGraphics
 import Compute
 import PlayerSupport
 
+/// A signpost ID to use when signposting `SpatialNavigator`.
 private let signpostId = OSSignpostID(log: SignpostLog.navigationLog)
 
 /// A `Navigator` that finds the shortest path in a 2D map at one moment in time.
+///
+/// `SpatialNavigator` uses the standard A* algorithm, optimized for speed and running entirely on the CPU.
+///
+/// This navigator does not support dynamic obstacles. If you attempt adding dynamic obstacles, they will be treated as static.
 public final class SpatialNavigator: Navigator {
     
     public var log: Log?
     
+    /// A rectangle representing the game map.
     private let boardRect: CGRect
     
+    /// The size of tiles/nodes, which represent the smallest navigatable space on the board.
+    ///
+    /// Smaller sizes take longer to compute but result in more concise paths. Setting a tile size smaller than the entity that is navigating may result
+    /// in gettting stuck on walls.
     public var tileSize: CGSize
     
+    /// The maximum 0-based x tile index.
     private let maxXTileIndex: Int
+    /// The maximum 0-based y tile index.
     private let maxYTileIndex: Int
     
+    /// The stored obstacles, which are always treated as static.
     private var obstacles: [Obstacle] {
         get {
             return syncQueue.sync { _obstacles }
@@ -37,8 +50,14 @@ public final class SpatialNavigator: Navigator {
         }
     }
     
+    /// The raw stored obstacles.
+    ///
+    /// - Warning: Access to this property is not synchronized across threads.
     private var _obstacles = [Obstacle]()
     
+    /// The most-recently computed path, as a collection of points.
+    ///
+    /// This is stored in an `AnyCollection` so that lazy collections may be used to reduce calculation time.
     private(set) var path: AnyCollection<CGPoint> {
         get {
             return syncQueue.sync { _path }
@@ -50,16 +69,28 @@ public final class SpatialNavigator: Navigator {
         }
     }
     
+    /// The raw stored path.
+    ///
+    /// - Warning: Access to this property is not synchronized across threads.
     private var _path = AnyCollection<CGPoint>([])
     
+    /// The obstacles to use for the current in-flight recalculation.
+    ///
+    /// This property is set at the beginning of recalculations to the result of accessing `obstacles`.
+    /// In this way, we eagerly access the obstacles in a synchronized manner only once, saving a lot of
+    /// time not having to context switch between threads as often.
     private var obstaclesForCurrentRecalculation = [Obstacle]()
     
+    /// The list of nodes currently up for consideration as the next in the path.
     private var openList = [CGPoint: Node]()
     
+    /// The list of nodes already visited.
     private var closedList = Set<Node>()
     
+    /// A dispatch queue for synchronizing access to stored properties that may be accessed by multiple threads.
     private let syncQueue = DispatchQueue(label: "SpatialNavigator-sync", qos: .userInitiated, attributes: [], autoreleaseFrequency: .workItem, target: nil)
     
+    /// A dispatch queue for performing path calculations.
     private let backgroundQueue = DispatchQueue(label: "SpatialNavigator-bk", qos: .userInitiated, attributes: [], autoreleaseFrequency: .workItem, target: nil)
     
     public init(boardRect: CGRect) {
@@ -97,6 +128,12 @@ public final class SpatialNavigator: Navigator {
         }
     }
     
+    /// Finds a path from `source` to `destination`, if one exists.
+    ///
+    /// - Parameters:
+    ///   - source: The point in the game board to start with.
+    ///   - destination: The point in the game board to end with.
+    /// - Returns: A collection of points representing the path.
     private func path(from source: CGPoint, to destination: CGPoint) -> AnyCollection<CGPoint> {
         self.obstaclesForCurrentRecalculation = self.obstacles
         
@@ -141,6 +178,10 @@ public final class SpatialNavigator: Navigator {
         return AnyCollection([])
     }
     
+    /// Returns a complete path by following the parent chain from the last node.
+    ///
+    /// - Parameter node: The last (destination) node.
+    /// - Returns: A reconstructed path.
     private func reconstructedPath(from node: Node) -> AnyCollection<CGPoint> {
         return AnyCollection(Array(sequence(first: node, next: { $0.parent })).lazy.reversed().map({ $0.rect.center }))
     }
@@ -166,32 +207,53 @@ public final class SpatialNavigator: Navigator {
         }
     }
     
+    /// A `Node` represents one tile on the board.
     fileprivate final class Node {
         
+        /// The x index of the tile.
         let xIndex: Int
         
+        /// The y index of the tile.
         let yIndex: Int
         
+        /// A point of the form `(xIndex, yIndex)`. Since these represent tile coordinates, this point is not in the game board's coordinate space.
         var tilePoint: CGPoint {
             return CGPoint(x: xIndex, y: yIndex)
         }
         
+        /// The rect covered by the tile, in the game board's coordinate space.
         let rect: CGRect
         
+        /// An unowned reference to the navigator that created this node.
         private unowned let navigator: SpatialNavigator
         
+        /// This node's ideal predecessor in a path from source to destination.
         var parent: Node?
         
+        /// The best-path distance from the start node.
         var shortestFoundDistanceFromSource: Int
         
+        /// The heuristic distance from this node to the destination node.
         var estimatedDistanceFromDestination: Int
         
+        /// Creates a new node at a given point in the game board. The node will represent the entire tile `point` falls into.
+        ///
+        /// - Parameters:
+        ///   - point: A point on the game board.
+        ///   - navigator: The navigator creating this node.
         convenience init(point: CGPoint, navigator: SpatialNavigator) {
             let xIndex = Int(((point.x) / navigator.tileSize.width).rounded(.down))
             let yIndex = Int(((point.y) / navigator.tileSize.height).rounded(.down))
             self.init(xIndex: xIndex, yIndex: yIndex, parent: nil, navigator: navigator)
         }
         
+        /// Creates a new node at the given tile coordinate.
+        ///
+        /// - Parameters:
+        ///   - xIndex: The x index of the tile.
+        ///   - yIndex: The y index of the tile.
+        ///   - parent: The ideal predecessor of this node in a path from source to destination.
+        ///   - navigator: The navigator creating this node.
         init(xIndex: Int, yIndex: Int, parent: Node?, navigator: SpatialNavigator) {
             self.parent = parent
             self.xIndex = xIndex
@@ -205,14 +267,20 @@ public final class SpatialNavigator: Navigator {
             self.estimatedDistanceFromDestination = .max
         }
         
+        /// An estimated score of how ideal this node is to be included in the path.
+        ///
+        /// This is the sum of `shortestFoundDistanceFromSource` and `estimatedDistanceFromDestination`.
         var estimatedScore: Int {
             return shortestFoundDistanceFromSource + estimatedDistanceFromDestination
         }
         
+        /// Computes the heuristic tile distance from this node to some other node.
         func estimatedDistance(to destination: Node) -> Int {
             return abs(destination.xIndex - xIndex) + abs(destination.yIndex - yIndex)
         }
-        
+
+        /// Returns all nodes that may be navigated to in exactly one tile step in any direction, and that are
+        /// not obstructed by obstacles or otherwise outside of game board bounds.
         func neighbors() -> [Node] {
             let positions = [
                 (xIndex, yIndex - 1), // Up

@@ -8,11 +8,13 @@
 import CoreGraphics
 
 extension CGPoint {
-    
+
+    /// Computes the linear distance from this point to some other point.
     public func distance(to other: CGPoint) -> CGFloat {
         return hypot(x - other.x, y - other.y)
     }
     
+    /// Returns a standard vector from this point to some other point.
     public func vector(pointingTo other: CGPoint) -> CGVector {
         return CGVector(dx: other.x - x, dy: other.y - y)
     }
@@ -21,6 +23,7 @@ extension CGPoint {
 
 extension CGRect {
     
+    /// The center point of the rect.
     public var center: CGPoint {
         return CGPoint(x: midX, y: midY)
     }
@@ -29,6 +32,9 @@ extension CGRect {
 
 extension CGVector {
     
+    /// The direction of the vector, expressed as radians countercockwise from the positive x axis.
+    ///
+    /// This value assumes a downward-increasing y axis.
     public var radiansCounterclockwiseFromPositiveXAxis: CGFloat {
         // The game board has origin in top left, but headings are expressed counterclockwise.
         // Need to flip y axis.
