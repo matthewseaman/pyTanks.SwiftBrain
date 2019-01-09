@@ -142,8 +142,14 @@ public final class SpatialNavigator: Navigator {
     private func path(from source: CGPoint, to destination: CGPoint) -> AnyCollection<CGPoint> {
         self.obstaclesForCurrentRecalculation = self.obstacles
         
-        let start = Node(point: source, navigator: self)
-        let end = Node(point: destination, navigator: self)
+        var start = Node(point: source, navigator: self)
+        var end = Node(point: destination, navigator: self)
+        
+        guard let nearestStart = start.nearestUnblocked() else { return AnyCollection([]) }
+        guard let nearestEnd = end.nearestUnblocked() else { return AnyCollection([]) }
+        
+        start = nearestStart
+        end = nearestEnd
         
         closedList = []
         openList = [start.tilePoint: start]
@@ -291,8 +297,10 @@ public final class SpatialNavigator: Navigator {
         }
 
         /// Returns all nodes that may be navigated to in exactly one tile step in any direction, and that are
-        /// not obstructed by obstacles or otherwise outside of game board bounds.
-        func neighbors() -> [Node] {
+        /// not outside of game board bounds.
+        ///
+        /// - Parameter unblocked: The default is `true`. Pass `false` to return all neighbors, not just the ones free from obstacles.
+        func neighbors(unblocked: Bool = true) -> [Node] {
             let positions = [
                 (xIndex, yIndex - 1), // Up
                 (xIndex, yIndex + 1), // Down
@@ -306,11 +314,32 @@ public final class SpatialNavigator: Navigator {
             for (x, y) in positions {
                 guard x >= 0 && x <= navigator.maxXTileIndex && y >= 0 && y <= navigator.maxYTileIndex else { continue }
                 let node = Node(xIndex: x, yIndex: y, parent: self, navigator: navigator)
-                guard !navigator.obstaclesForCurrentRecalculation.contains(where: { $0.intersects(node.rect) }) else { continue }
+                guard !unblocked || !node.isBlockedByObstacles() else { continue }
                 nodes.append(node)
             }
             
             return nodes
+        }
+        
+        /// Finds and returns the nearest navigatable node that is not blocked by obstacles.
+        ///
+        /// The receiving node is checked first. If multiple equidistant, unblocked nodes exist, which one will be returned is undefined.
+        func nearestUnblocked() -> Node? {
+            var nodes = [self]
+            
+            while !nodes.isEmpty {
+                if let match = nodes.first(where: { !$0.isBlockedByObstacles() }) {
+                    return match
+                }
+                nodes = nodes.flatMap { $0.neighbors(unblocked: false) }
+            }
+            
+            return nil
+        }
+        
+        /// Determines whether this node is blocked by obstacles and therefore is not a valid path tile.
+        private func isBlockedByObstacles() -> Bool {
+            return navigator.obstaclesForCurrentRecalculation.contains(where: { $0.intersects(rect) })
         }
     }
     
