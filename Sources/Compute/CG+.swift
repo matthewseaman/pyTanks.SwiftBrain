@@ -28,6 +28,11 @@ extension CGRect {
         return CGPoint(x: midX, y: midY)
     }
     
+    /// The distance from one corner of the rectangle to the opposite corner.
+    public var diagonalDistance: CGFloat {
+        return CGPoint.zero.distance(to: CGPoint(x: width, y: height))
+    }
+    
 }
 
 extension CGVector {

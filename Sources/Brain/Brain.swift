@@ -178,7 +178,8 @@ open class Brain {
             switch priority {
             case .mostOptimalPath:
                 let nav = SpatialNavigator(boardRect: boardRect)
-                nav.tileSize = CGSize(width: config.tank.width, height: config.tank.height)
+                let diagonal = CGRect(origin: .zero, size: CGSize(width: config.tank.width, height: config.tank.height)).diagonalDistance
+                nav.tileSize = CGSize(width: diagonal, height: diagonal)
                 return nav
             }
         }
