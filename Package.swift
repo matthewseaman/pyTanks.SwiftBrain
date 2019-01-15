@@ -31,7 +31,7 @@ let package = Package(
             dependencies: ["Navigate", "Artillery", "PlayerSupport"]),
         .target(
             name: "Artillery",
-            dependencies: ["Navigate", "PlayerSupport"]),
+            dependencies: ["PlayerSupport"]),
         .target(
             name: "Navigate",
             dependencies: ["Compute", "PlayerSupport"]),

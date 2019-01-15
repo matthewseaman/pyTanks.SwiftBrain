@@ -9,6 +9,7 @@ import Foundation
 import CoreGraphics
 import PlayerSupport
 import Navigate
+import Artillery
 
 /// A `Brain` is the central class for public use by pyTanks.SwiftBrain clients.
 ///
@@ -45,6 +46,9 @@ open class Brain {
     
     /// The navigator responsible for navigating the board.
     private var navigator: Navigator
+    
+    /// The canon responsible for targeting and firing.
+    private var canon: Canon
     
     /// The most-recently "remembered" game state.
     private var mostRecentGameState: GameState?
@@ -83,11 +87,13 @@ open class Brain {
     public init(config: GameConfiguration, mode: NavigationMode = .momentary, priority: NavigationPriority = .mostOptimalPath) {
         self.boardRect = CGRect(x: 0, y: 0, width: config.map.width, height: config.map.height)
         self.navigator = Brain.makeNavigator(boardRect: boardRect, config: config, mode: mode, priority: priority)
+        self.canon = Canon()
     }
 
     /// Updates the brain with info from a `GameState`.
     public func remember(_ state: GameState) {
         self.mostRecentGameState = state
+        self.canon.gameState = state
         
         if let navRecalcInterval = navigationRecalculationInterval, lastNavigationRecalculation == nil || -lastNavigationRecalculation!.timeIntervalSinceNow >= navRecalcInterval {
             recalculateNavigation()
